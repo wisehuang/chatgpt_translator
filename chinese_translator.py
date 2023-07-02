@@ -1,8 +1,10 @@
 import re
 import openai
+import concurrent.futures
+
 from tqdm import tqdm
 
-openai.api_key = "<<YOUR API KEY>>"
+openai.api_key = "<<YOUR KEY HERE>>"
 
 # Define a function to translate a string to traditional Chinese using ChatGPT
 def translate_to_chinese(text):
@@ -12,7 +14,7 @@ def translate_to_chinese(text):
 
     response = openai.ChatCompletion.create(
     model="gpt-4",
-    max_tokens=4096,
+    max_tokens=8192,
     temperature=1,
     messages = messages)
         
@@ -44,27 +46,30 @@ sentences = re.split(r'(?<=\.)\s+', trimmed_article)
 output_strings = []
 current_string = ''
 
-# Loop through the sentences and add them to the output strings
-for sentence in sentences:
-    # If adding the current sentence would make the current string too long, add it to the output strings and start a new string
+# Loop through the sentences and add them to the output dictionary
+output_dict = {}
+current_string = ''
+for i, sentence in enumerate(sentences, start=1):
+    # If adding the current sentence would make the current string too long, add it to the output dictionary and start a new string
     if len(current_string + ' ' + sentence) > 15000:
-        output_strings.append(current_string)
+        output_dict[i-1] = current_string
         current_string = ''
     # Add the current sentence to the current string
     current_string += ' ' + sentence
 
-# Add the final string to the output strings
-output_strings.append(current_string)
+# Add the final string to the output dictionary
+output_dict[len(sentences)-1] = current_string
 
 # Translate each output string to traditional Chinese using ChatGPT
-chinese_strings = []
-for string in tqdm(output_strings, desc='Translating to Chinese'):
-    chinese_string = translate_to_chinese(string)    
-    chinese_strings.append(chinese_string)
+chinese_dict = {}
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    futures = {executor.submit(translate_to_chinese, string): i for i, string in output_dict.items()}
+    for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc='Translating to Chinese'):
+        i = futures[future]
+        chinese_string = future.result()
+        chinese_dict[i] = chinese_string
 
-# # Print the translated strings
-# for i, string in enumerate(chinese_strings):
-#     print(f'String {i+1}: {string} \n')
-
+# Write the translated strings to a file
 with open('translated_result.txt', 'w') as f:
-    f.write(chinese_strings)
+    for i, chinese_sentence in sorted(chinese_dict.items()):
+        f.write(f'{chinese_sentence}\n')
