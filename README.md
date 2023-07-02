@@ -8,4 +8,4 @@ This script uses the OpenAI API to translate English text to traditional Chinese
 2. Set your OpenAI API key by replacing `<<YOUR API KEY>>` with your actual API key on line 5 of `chinese_translator.py`.
 3. Create an input text file named `article.txt` in the same directory as `chinese_translator.py`.
 4. Run the script by running `python chinese_translator.py`.
-5. The translated text will be written to an output file named `translated.txt` in the same directory as `chinese_translator.py`.
+5. The translated text will be written to an output file named `translated_result.txt` in the same directory as `chinese_translator.py`.
