@@ -17,7 +17,6 @@ def translate_to_chinese(text):
     messages = messages)
         
     # Extract the translated text from the API response
-    print(response)
     translation = response.choices[0].message.content.strip()
 
     # Remove any newline characters from the translation
